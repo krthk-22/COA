@@ -115,6 +115,7 @@ class Level
     {
         down_buffer_cap = 2*((int)pow(L_num,2/3)) - 1;
         max_down_buffers = pow(L_num,1/3);
+        cur_down_buffers = 0;
         Level_num = L_num;
         head = new DownBuffer<T>;
         tail = new DownBuffer<T>;
@@ -203,14 +204,15 @@ class Priority_Queue{
             }
             
             //3)In case the number of downbuffers exceeds max number of down buffers permitted for this level simply add these elements to ins_elements vector
-            cur = tail -> prev;
-            while(cur_down_buffers > max_down_buffers){
-                for(auto x : cur.elements){
+            cur = levels[level_index].tail -> prev;
+            while(levels[level_index].cur_down_buffers > levels[level_index].max_down_buffers){
+                for(auto x : cur->elements){
                     ins_elements.push_back(x);
                 }
                 (cur -> next) -> prev = cur -> prev;
                 (cur -> prev) -> next = cur -> next;
                 delete cur;
+                levels[level_index].cur_down_buffers--;
             }
 
             //4)In case ins_elements vector is not empty we must put these elements into the upbuffer
