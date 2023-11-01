@@ -1,3 +1,9 @@
+//NOTES
+//Change to std::list if time permits
+//Think of new way to represent pivot , pivot = -1 initially is weird , and only works for integers anol
+//Do insert function
+//Change private , public later on
+
 #include <bits/stdc++.h>
 using namespace std;
 #define NUM_LEVELS 5
@@ -99,8 +105,8 @@ class Level
     DownBuffer<T>* head;
     DownBuffer<T>* tail;
 
-    int Level_num;
-    int down_buffer_cap;
+    int Level_num; //size of the level/ up buffer
+    int down_buffer_cap; //capacity of the downbuffers in this level
     int max_down_buffers;
     int cur_down_buffers;
 
@@ -113,6 +119,7 @@ class Level
         head = new DownBuffer<T>;
         tail = new DownBuffer<T>;
         head -> next = tail;
+        tail -> prev = head;
 
         Up = UpBuffer<T>(Level_num);
     }
@@ -177,8 +184,11 @@ class Priority_Queue{
         }
 
         void push(int level_index,vector<T>& ins_elements){
+            //1)Sort the elements to be inserted in this level
             sort(ins_elements.begin(),ins_elements.end(),greater<T>());
-            
+
+
+            //2)Sequentially fill downbuffers with elements less than the pivot . There may be some elements left after this.
             DownBuffer<T>* cur = (levels[level_index].head) -> next;
             while(cur != levels[level_index].tail && !ins_elements.empty()){
                 while(!ins_elements.empty() && (cur -> pivot) > ins_elements.back()){
@@ -189,15 +199,32 @@ class Priority_Queue{
                         levels[level_index].cur_down_buffers++;
                     }
                 }
+                cur = cur -> next;
             }
             
+            //3)In case the number of downbuffers exceeds max number of down buffers permitted for this level simply add these elements to ins_elements vector
+            cur = tail -> prev;
+            while(cur_down_buffers > max_down_buffers){
+                for(auto x : cur.elements){
+                    ins_elements.push_back(x);
+                }
+                (cur -> next) -> prev = cur -> prev;
+                (cur -> prev) -> next = cur -> next;
+                delete cur;
+            }
+
+            //4)In case ins_elements vector is not empty we must put these elements into the upbuffer
             UpBuffer<T>& up = levels[level_index].Up;
             while(!ins_elements.empty()){
                 up.insert(ins_elements.back());
                 ins_elements.pop_back();
+
+                //5)????? If the up buffer exceeds its capacity we should push to the next level recursively.
+                //Note that I have taken a decision of incorporating this IF STATEMENT within the while loop of ins_elements
+                //I do not see any issue of keeping this IF STATEMENT completely outside the while loop after it
+                //The change to be made would be that we must choose put the last (up.capacity) elements into vector next_level_push
+
                 if((up.elements).size() > up.capacity){
-                    //add code to recursively push to next level
-                    //note that as we are keeping the max number of levels as 5 or smthing , let us not push beyond this level if its that level 
                     vector<T> next_level_push;
                     for(int i = (up.elements).size()-1;i>=1;i--){
                         next_level_push.push_back((up.elements)[i]);
