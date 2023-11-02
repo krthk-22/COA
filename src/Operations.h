@@ -3,6 +3,10 @@
 //Think of new way to represent pivot , pivot = -1 initially is weird , and only works for integers anol
 //Do insert function
 //Change private , public later on
+//NO edge case condition added when pushing to last level , pulling from last level
+
+//PULL OPERATION UP BUFFER , can it have some less number of elements than initial when pulling ?????? altho this means that we cannot pull unless we do global reshuffling 
+//MAKE a call for above statement , what to do ?
 
 #include <bits/stdc++.h>
 using namespace std;
@@ -50,11 +54,17 @@ class DownBuffer
         if(pivot < x)pivot = x;
     }
 
+    void recalc_pivot(){
+        T pivot = -1;
+        for(auto x : elements){
+            if(pivot < x)pivot = x;
+        }
+    }
+
     void print(){
         for(auto x : elements){
             cout<<x<<" ";
         }
-        cout<<endl;
     }
 
     ostream& operator<<(ostream& os){
@@ -107,14 +117,16 @@ class Level
 
     int Level_num; //size of the level/ up buffer
     int down_buffer_cap; //capacity of the downbuffers in this level
+    int down_buffer_min; //Every downbuffer after the first one should be minimum of this length
     int max_down_buffers;
     int cur_down_buffers;
 
     public:
     Level(double L_num = 16)
     {
-        down_buffer_cap = 2*((int)pow(L_num,2/3)) - 1;
-        max_down_buffers = pow(L_num,1/3);
+        down_buffer_cap = 2*((int)pow(L_num,2.0/3.0)) - 1; 
+        down_buffer_min = pow(L_num,2.0/3.0);
+        max_down_buffers = pow(L_num,1.0/3.0) + 2; //This is ceil(pow(L_num,1.0/3.0)) + 1 when the inner thing is not an integer
         cur_down_buffers = 0;
         Level_num = L_num;
         head = new DownBuffer<T>;
@@ -126,6 +138,18 @@ class Level
     }
     int size(){
         return Level_num;
+    }
+    void print(){
+        cout<<"Level_num(size) : "<<Level_num<<"| Upbuffer: ";
+        Up.print(); //Contains an internal newline
+        DownBuffer<T>* cur = head -> next;
+        cout<<"Downbuffers : ";
+        while(cur != tail){
+            cur->print();//Does not print newline internally
+            if(cur != tail ->prev )cout<<" | ";
+            cur = cur -> next;
+        }
+        cout<<"\n";
     }
 
     template<typename XXX> friend class Priority_Queue;
@@ -144,16 +168,23 @@ class Priority_Queue{
 
     public:
         Priority_Queue(double c){
+            
+            ins_buf_cap = del_buf_cap = pow(c,2.0/3.0);
             for(int i = 0;i<NUM_LEVELS;i++){
-                levels[i] = Level<T>((c+1e-5));
+                levels[i] = Level<T>((c+1e-5)); 
                 c = pow(c , 1.5);
             }
             
-            ins_buf_cap = del_buf_cap = pow(c,2/3);
             max_element_del_buf_index = -1;
 
         }
     //c is size of first level
+
+        void print(){
+            for(int i = 0;i < NUM_LEVELS ;i++){
+                levels[i].print();
+            }
+        }
 
     //INSERT FUNCTION IS NOT DONE AT ALL
         void insert(T to_insert){
@@ -223,7 +254,7 @@ class Priority_Queue{
 
                 //5)????? If the up buffer exceeds its capacity we should push to the next level recursively.
                 //Note that I have taken a decision of incorporating this IF STATEMENT within the while loop of ins_elements
-                //I do not see any issue of keeping this IF STATEMENT completely outside the while loop after it
+                //I do not see any issue of keeping this IF STATEMENT completely outside the while loop after it . As it is pretty much not possible to increase the upbuffer to more than twice its capacity .
                 //The change to be made would be that we must choose put the last (up.capacity) elements into vector next_level_push
 
                 if((up.elements).size() > up.capacity){
@@ -237,6 +268,95 @@ class Priority_Queue{
             }
 
             return;
+        }
+
+        void pull(int level_index,vector<T>& ins_elements){ //Note that the vector given should be empty
+            if(level_index >= NUM_LEVELS)return; //HARD STOP HARD STOP HARD STOP 
+
+            //1)Define how many elements we should pull based on the level_index
+            int num_pull;
+            int pulled = 0;
+            if(level_index == 0) num_pull = ins_buf_cap;
+            else{
+                num_pull = levels[level_index - 1].Level_num;
+            }
+
+            //2)Add first downbuffer's elements to the ins_elements vector. Either as many as needed or as many as possible .
+            DownBuffer<T>* down1 = (levels[level_index].head) -> next;
+            if(down1 != levels[level_index].tail){
+                sort((down1->elements).begin(),(down1->elements).end(),greater<T>());
+                while(pulled < num_pull && !(down1 -> elements).empty()){
+                    pulled++;
+                    ins_elements.push_back((down1->elements).back());
+                    (down1 -> elements).pop_back();
+                }
+                down1 -> recalc_pivot();
+                //If the downbuffer became empty just delete it and move down1 forward once
+                if((down1 ->elements).size() == 0){
+                    (down1 -> prev) -> next = down1 -> next;
+                    (down1 -> next) -> prev = down1 -> prev;
+                    DownBuffer<T>* todel = down1;
+                    down1 = down1 -> next;
+                    delete todel;
+                    levels[level_index].cur_down_buffers--;
+                }
+            }
+
+            //3)Check if ins_elements has enough elements .
+            //If it does then we must return 
+            if(pulled >= num_pull) return;
+
+            //4)If the function does not return above it means that we do not have enough elements in ins_elements yet
+            //Try adding some elements from the down1 , down1 was moved forward
+            if(down1 != levels[level_index].tail){
+                sort((down1->elements).begin(),(down1->elements).end(),greater<T>());
+                while(pulled < num_pull && !(down1->elements).empty()){
+                    pulled++;
+                    ins_elements.push_back((down1->elements).back());
+                    (down1->elements).pop_back();
+                }
+                down1 -> recalc_pivot();
+                //We are able to return here due to the size of second downbuffer being atleast num_pull if the second downbuffer exists
+                return;
+            }else{
+                //5)If the control reaches here it implies that the current level does not contain any more down buffers
+                UpBuffer<T>& up = levels[level_index].Up;
+                int initial_up_size = up.elements.size();
+                pull(level_index + 1,up.elements);
+                //Added Level_num elements to upbuffer ideally after above recursive pull
+                //Sort the upbuffer
+                sort(up.elements.begin(),up.elements.end(),greater<T>());
+                //Now put the required number of elements into down buffers num_pull after taking the required amount of elements into ins_elements . But note that up buffer size should not decrease ? according to paper ? ... check
+                while(pulled < num_pull && !up.elements.empty()){
+                    pulled++;
+                    ins_elements.push_back(up.elements.back());
+                    up.elements.pop_back();
+                }
+                //according to paper we should put enough elements into downbuffers as to make the number of elements into upbuffer equal to initial
+                //altho this can't happen WHEN THE PULL OPERATION FROM ABOVE LEVELS ITSELF DOES NOT give many elements (edge cases )
+
+                //How making of downbuffers works ? 
+                //Make downbuffers from biggest elements and move backwards 
+                //We must do this as the first downbuffer can be O(down_buffer_min) but others must have more than down_buffer_min
+                DownBuffer<T>* cur = levels[level_index].tail;
+                while(up.elements.size() > initial_up_size){
+                    DownBuffer<T>* temp = new DownBuffer<T>(levels[level_index].down_buffer_cap);
+                    levels[level_index].cur_down_buffers++;
+                    (cur -> prev) -> next = temp;
+                    temp -> prev = cur -> prev; 
+                    cur -> prev = temp;
+                    temp -> next = cur;
+                    cur = temp;
+                    while((cur->elements).size() < levels[level_index].down_buffer_min && up.elements.size() > initial_up_size){
+                        cur -> insert(up.elements.back());
+                        up.elements.pop_back();
+                    }
+                }
+
+                //Now simply take remaining elements starting from the first down buffer , sort before taking tho
+
+            }
+            
         }
 };
 
