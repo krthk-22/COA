@@ -10,7 +10,6 @@
 
 #include <bits/stdc++.h>
 using namespace std;
-#define NUM_LEVELS 5
 
 template<typename T>
 class DownBuffer
@@ -159,17 +158,21 @@ class Level
 template<typename T>
 class Priority_Queue{
     public:
-        Level<T> levels[NUM_LEVELS];
+        Level<T>* levels;
         int max_element_del_buf_index;
         vector<T> insertion_buffer;
         int ins_buf_cap;
         vector<T> deletion_buffer;
         int del_buf_cap;
+        int total_elements;
+        int NUM_LEVELS;
 
     public:
-        Priority_Queue(double c){
-            
+        Priority_Queue(double c,int NUM_LEVELS){
+            this -> NUM_LEVELS = NUM_LEVELS;
+            total_elements = 0;
             ins_buf_cap = del_buf_cap = pow(c,2.0/3.0);
+            levels = new Level<T>[NUM_LEVELS];
             for(int i = 0;i<NUM_LEVELS;i++){
                 levels[i] = Level<T>((c+1e-5)); 
                 c = pow(c , 1.5);
@@ -215,7 +218,52 @@ class Priority_Queue{
 
         }
 
+        T delete_min(){
+            //0)If deletion buffer is empty it implies there are no elements in whole priority queue
+            if(deletion_buffer.empty()){
+                T garbage;
+                return garbage;
+            }
+            //1)Find min_element in the down buffer 
+            //Do note that this will be possible if there are atleast 1 element in the whole priority queue
+            //At end of every delete min we make sure that deletion buffer is not empty (pull elements from priority queue levels+ins_buffer if there are atleast 1 element in all that then good)
+            
+            auto min_element_itr = deletion_buffer.begin();
+            T min_element;
+            
+            for(auto itr = deletion_buffer.begin(); itr != deletion_buffer.end(); itr++){
+                if(*itr < *min_element_itr) min_element_itr = itr;
+            }
+            min_element = *min_element_itr;
+            deletion_buffer.erase(min_element_itr);
+
+            if(deletion_buffer.empty()){
+                //2)If in case the deletion buffer becomes empty now , then we pull the smallest c^2/3 elements from level 0 AND we combine this with the elements in insertion buffer. And clear the insertion buffer .
+                vector<T> deletion_buffer_probables;
+                pull(0,deletion_buffer_probables);
+                deletion_buffer_probables.insert(deletion_buffer_probables.end(),insertion_buffer.begin(),insertion_buffer.end());
+                insertion_buffer.clear();
+
+                //3)Sort these probables
+                sort(deletion_buffer_probables.begin(),deletion_buffer_probables.end(),greater<T>());
+
+                //4)Fill the smallest deletion_buffer_cap elements into deletion buffer . IF the probables vector has enough elements that is lol . 
+                while(!deletion_buffer_probables.empty() && deletion_buffer.size() < del_buf_cap){
+                    deletion_buffer.push_back(deletion_buffer_probables.back());
+                    deletion_buffer_probables.pop_back();
+                }
+            
+                //5)Insert remaining elements into the insertion buffer . In non-edge cases the insertion buffer will end up with the same number of elements that it started with . 
+                //Only when the pull operation does not give full del_buf_cap number of elements then some number of elements from insertion buffer will decrease
+                insertion_buffer.insert(insertion_buffer.end(),deletion_buffer_probables.begin(),deletion_buffer_probables.end());
+            }
+
+            return min_element;
+        }
+
         void push(int level_index,vector<T>& ins_elements){
+            if(level_index == 0)total_elements = total_elements + ins_elements.size();
+
             //1)Sort the elements to be inserted in this level
             sort(ins_elements.begin(),ins_elements.end(),greater<T>());
 
@@ -271,6 +319,7 @@ class Priority_Queue{
         }
 
         void pull(int level_index,vector<T>& ins_elements){ //Note that the vector given should be empty
+            if(total_elements == 0)return; //Just optimisation when there are no elements in any element of priority queue , just dont even try to pull
             if(level_index >= NUM_LEVELS)return; //HARD STOP HARD STOP HARD STOP 
 
             //1)Define how many elements we should pull based on the level_index
