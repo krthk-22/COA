@@ -219,6 +219,10 @@ class Priority_Queue{
 
         }
 
+        bool empty(){
+            return deletion_buffer.empty();
+        }
+
         T top(){
             if(deletion_buffer.size() > 0)
             return deletion_buffer[0];
