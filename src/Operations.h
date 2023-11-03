@@ -219,6 +219,15 @@ class Priority_Queue{
 
         }
 
+        T top(){
+            if(deletion_buffer.size() > 0)
+            return deletion_buffer[0];
+            else {
+                T garbage;
+                return garbage;
+            }
+        }
+
         T delete_min(){
             //0)If deletion buffer is empty it implies there are no elements in whole priority queue
             if(deletion_buffer.empty()){
