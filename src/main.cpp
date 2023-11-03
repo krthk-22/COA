@@ -1,6 +1,6 @@
 #include<bits/stdc++.h>
 #include"Operations.h"
-#define info 1
+#define info 0
 #define NUM_LEVELS 5
 using namespace std;
 
@@ -9,13 +9,13 @@ int main(){
     Priority_Queue<int> pq(3,NUM_LEVELS);
     vector<int> v;
     
-    for(int i = 2 ;i<9;i++)
+    for(int i = 2 ;i<100;i++)
         v.push_back(i);
     
     pq.push(0,v);
     pq.deletion_buffer.push_back(1);
 
-    for(int i = 0; i<10;i++){
+    for(int i = 0; i<50;i++){
         cout<<pq.delete_min()<<"\n";
     }
 
@@ -25,6 +25,7 @@ int main(){
             cout<<"min size of "<<i<<"th level down buffer is(except first) :"<<pq.levels[i].down_buffer_min<<"\n";
         }
     }
+
     pq.print();
 
 

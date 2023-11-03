@@ -381,9 +381,16 @@ class Priority_Queue{
                     ins_elements.push_back(up.elements.back());
                     up.elements.pop_back();
                 }
+
                 //according to paper we should put enough elements into downbuffers as to make the number of elements into upbuffer equal to initial
                 //altho this can't happen WHEN THE PULL OPERATION FROM ABOVE LEVELS ITSELF DOES NOT give many elements (edge cases )
 
+                //BELOW CODE sorts the elements after initial_up_size elements in ascending order to make the downbuffers
+                if(up.elements.size() > initial_up_size){
+                    sort(up.elements.begin() + initial_up_size , up.elements.end());
+                }
+                //Bhery sed above code , altho i can just reverse it llol , i will sort it cuz I lazy to write reverse code
+                
                 //How making of downbuffers works ? 
                 //Make downbuffers from biggest elements and move backwards 
                 //We must do this as the first downbuffer can be O(down_buffer_min) but others must have more than down_buffer_min
