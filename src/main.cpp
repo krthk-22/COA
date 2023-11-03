@@ -12,7 +12,7 @@ int main(){
     for(int i = 2 ;i<100;i++)
         pq.insert(i);
 
-    for(int i = 0; i<1000;i++){
+    for(int i = 0; i<100;i++){
         cout<<pq.delete_min()<<"\n";
     }
 

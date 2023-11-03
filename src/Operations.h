@@ -33,6 +33,7 @@ class DownBuffer
         sort(elements.begin(),elements.end());
         DownBuffer<T>* excess = new DownBuffer<T>(capacity);
         (this->next)->prev = excess;
+        excess -> next = this -> next;
         excess -> prev = this;
         this -> next = excess;
 
