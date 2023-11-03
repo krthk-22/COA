@@ -385,17 +385,11 @@ class Priority_Queue{
                 //according to paper we should put enough elements into downbuffers as to make the number of elements into upbuffer equal to initial
                 //altho this can't happen WHEN THE PULL OPERATION FROM ABOVE LEVELS ITSELF DOES NOT give many elements (edge cases )
 
-                //BELOW CODE sorts the elements after initial_up_size elements in ascending order to make the downbuffers
-                if(up.elements.size() > initial_up_size){
-                    sort(up.elements.begin() + initial_up_size , up.elements.end());
-                }
-                //Bhery sed above code , altho i can just reverse it llol , i will sort it cuz I lazy to write reverse code
-                
                 //How making of downbuffers works ? 
                 //Make downbuffers from biggest elements and move backwards 
                 //We must do this as the first downbuffer can be O(down_buffer_min) but others must have more than down_buffer_min
                 DownBuffer<T>* cur = levels[level_index].tail;
-                while(up.elements.size() > initial_up_size){
+                for(int i = initial_up_size;i < up.elements.size();){
                     DownBuffer<T>* temp = new DownBuffer<T>(levels[level_index].down_buffer_cap);
                     levels[level_index].cur_down_buffers++;
                     (cur -> prev) -> next = temp;
@@ -403,11 +397,12 @@ class Priority_Queue{
                     cur -> prev = temp;
                     temp -> next = cur;
                     cur = temp;
-                    while((cur->elements).size() < levels[level_index].down_buffer_min && up.elements.size() > initial_up_size){
-                        cur -> insert(up.elements.back());
-                        up.elements.pop_back();
+                    while((cur->elements).size() < levels[level_index].down_buffer_min && i < up.elements.size()){
+                        cur -> insert(up.elements[i]);
+                        i++;
                     }
                 }
+                if(up.elements.size() > initial_up_size) up.elements.erase(up.elements.begin() + initial_up_size , up.elements.end());
 
                 //Now simply take remaining elements starting from the first down buffer , sort before taking tho
 
