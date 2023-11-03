@@ -191,15 +191,10 @@ class Priority_Queue{
 
     //INSERT FUNCTION IS NOT DONE AT ALL
         void insert(T to_insert){
-            //If the insertion buffer is about to become bigger than insertion buffer capacity
-            if(insertion_buffer.size()>=ins_buf_cap){
-                push(0,insertion_buffer);
-                insertion_buffer.clear();
-            }
-
             //1)If deletion buffer itself is empty , this implies priority queue is also empty . As down buffer has smallest elements of pq. insert into deletion buffer .
             if(deletion_buffer.size() == 0){
                 deletion_buffer.push_back(to_insert);
+                return;
             }
             else{
                 //FIND MAX element in the deletion buffer
@@ -214,6 +209,12 @@ class Priority_Queue{
                     insertion_buffer.push_back(deletion_buffer[max_index]);
                     deletion_buffer[max_index] = to_insert;
                 }
+            }
+
+            //3)If the insertion buffer is about to became bigger than insertion buffer capacity
+            if(insertion_buffer.size()>=ins_buf_cap){
+                push(0,insertion_buffer);
+                insertion_buffer.clear();
             }
 
         }

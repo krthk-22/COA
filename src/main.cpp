@@ -10,12 +10,9 @@ int main(){
     vector<int> v;
     
     for(int i = 2 ;i<100;i++)
-        v.push_back(i);
-    
-    pq.push(0,v);
-    pq.deletion_buffer.push_back(1);
+        pq.insert(i);
 
-    for(int i = 0; i<50;i++){
+    for(int i = 0; i<1000;i++){
         cout<<pq.delete_min()<<"\n";
     }
 
