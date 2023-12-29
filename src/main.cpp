@@ -1,7 +1,7 @@
 #include<bits/stdc++.h>
 #include"Operations.h"
 #define info 0
-#define NUM_LEVELS 5
+#define NUM_LEVELS 10
 using namespace std;
 
 int main(){
@@ -9,12 +9,13 @@ int main(){
     Priority_Queue<int> pq(3,NUM_LEVELS);
     vector<int> v;
     
-    for(int i = 2 ;i<100;i++)
-        pq.insert(i);
-
-    for(int i = 0; i<100;i++){
-        cout<<pq.delete_min()<<"\n";
+    for(int i = 1 ;i<8;i++){    
+        int x;
+        cin>>x;
+        pq.insert(x);
     }
+
+    cout<<"least element:"<<pq.delete_min();
 
     if(info == 1){
         for(int i = 0;i<NUM_LEVELS;i++){
@@ -23,11 +24,7 @@ int main(){
         }
     }
 
-    pq.print();
-
-
-
-
+    //pq.print();
 
 }
 
