@@ -9,6 +9,7 @@
 //MAKE a call for above statement , what to do ?
 
 #include <bits/stdc++.h>
+#include "Overload.h"
 using namespace std;
 
 template<typename T>
@@ -26,7 +27,6 @@ class DownBuffer
         next = nullptr;
         prev = nullptr;
         capacity = cap;
-        pivot = 0;
     }
 
     void split(){
@@ -43,22 +43,30 @@ class DownBuffer
         for(int i = capacity/2 + 1; i <= capacity; i++){
             elements.pop_back();
         }
-        pivot = 0;
-        for(auto x : elements){
-            if(x > pivot) pivot = x;
-        }
+        
+        recalc_pivot();
+        excess -> recalc_pivot();
     }
 
     void insert(T x){
         elements.push_back(x);
-        if(pivot < x)pivot = x;
+        if(elements.size() == 1){
+            pivot = x;
+        }
+        else{
+            if(pivot < x)pivot = x;
+        }    
     }
 
     void recalc_pivot(){
-        T pivot = -1;
-        for(auto x : elements){
-            if(pivot < x)pivot = x;
-        }
+        if(elements.size()==0)return;
+        else{
+            T temp_pivot = elements[0];
+            for(auto x : elements){
+                if(temp_pivot < x)temp_pivot = x;
+            }
+            pivot = temp_pivot;
+        }   
     }
 
     void print(){
@@ -185,6 +193,12 @@ class Priority_Queue{
     //c is size of first level
 
         void print(){
+            cout<<"deletion buffer:";
+            for(auto x : deletion_buffer)cout<<x<<" ";
+            cout<<endl;
+            cout<<"insertion buffer:";
+            for(auto x : insertion_buffer)cout<<x<<" ";
+            cout<<endl;
             for(int i = 0;i < NUM_LEVELS ;i++){
                 levels[i].print();
             }
@@ -199,7 +213,7 @@ class Priority_Queue{
             }
             else{
                 //FIND MAX element in the deletion buffer
-                T max_index = 0;
+                int max_index = 0;
                 for(int i = 0 ; i < deletion_buffer.size() ; i++){
                     if(deletion_buffer[max_index] < deletion_buffer[i]) max_index = i ;
                 }
